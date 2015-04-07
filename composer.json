@@ -1,5 +1,5 @@
 {
-    "name": "heisenberg-toolkit-installer",
+    "name": "JoeCianflone/heisenberg-toolkit-installer",
     "description": "The Heisenberg-Toolkit Installer.",
     "keywords": ["heisenberg", "sass", "javascript"],
     "license": "MIT",
