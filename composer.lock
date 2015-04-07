@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "bc01e20e965b17c65c638225614a5921",
+    "hash": "6b863d05c17b5ca848855d4045aa0d29",
     "packages": [
         {
             "name": "guzzlehttp/guzzle",
@@ -167,16 +167,16 @@
         },
         {
             "name": "league/flysystem",
-            "version": "dev-master",
+            "version": "1.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/flysystem.git",
-                "reference": "8da3ec24fcb18b0361fa68ebffc54d60003a0045"
+                "reference": "3c2400a99ccc3be6884d40361890010449c6b447"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/8da3ec24fcb18b0361fa68ebffc54d60003a0045",
-                "reference": "8da3ec24fcb18b0361fa68ebffc54d60003a0045",
+                "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/3c2400a99ccc3be6884d40361890010449c6b447",
+                "reference": "3c2400a99ccc3be6884d40361890010449c6b447",
                 "shasum": ""
             },
             "require": {
@@ -246,7 +246,7 @@
                 "sftp",
                 "storage"
             ],
-            "time": "2015-04-04 18:53:55"
+            "time": "2015-03-29 14:01:43"
         },
         {
             "name": "react/promise",
@@ -404,9 +404,7 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "league/flysystem": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": [],
