@@ -14,33 +14,24 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class InstallCommand extends Command
 {
-    /**
-     * [$files description]
-     * @var [type]
-     */
-    private $files;
 
     /**
-     * [$tempFolder description]
-     * @var [type]
+     * @var String
      */
     private $tempFolder;
 
     /**
-     * [$filesystem description]
-     * @var [type]
+     * @var League\Flysystem\Filesystem;
      */
     private $filesystem;
 
     /**
-     * [$tempZipFile description]
-     * @var [type]
+     * @var ZipArchive
      */
     private $tempZipFile;
 
     /**
-     * [$copyFiles description]
-     * @var [type]
+     * @var Array
      */
     private $copyFiles = [
         'folders' => [
@@ -57,42 +48,50 @@ class InstallCommand extends Command
     ];
 
     /**
-     * [configure description]
-     * @return [type] [description]
+     * Console command configuration, this is where the command arguments
+     * get set up and what the help menu pull from when it needs info for
+     * about the commands
+     *
+     * @return null
      */
     protected function configure()
     {
         $this->setName('install')
              ->setDescription('Installs heisenberg to the current directory.')
              ->addOption("src", "source files", InputOption::VALUE_OPTIONAL, "where to place src files")
-             ->addOption("assets", "public assets", InputOption::VALUE_OPTIONAL, "where heisenberg compiles files to");
+             ->addOption("dest", "compiled src files", InputOption::VALUE_OPTIONAL, "where heisenberg compiles files to");
     }
 
     /**
-     * [execute description]
-     * @param  InputInterface  $input  [description]
-     * @param  OutputInterface $output [description]
-     * @return [type]                  [description]
+     * This is the main entry point for the command. When you run it, this
+     * is what it fires
+     *
+     * @param  Symfony\Component\Console\Input\InputInterface  $input
+     * @param  Symfony\Component\Console\Input\OutputInterface $output
+     *
+     * @return null
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->filesystem = new Filesystem(new Adapter(getcwd().'/'));
         $srcLocation      = is_null($input->getOption("src")) ? "src" : $input->getOption("src");
-        $assetsLocation   = is_null($input->getOption("src")) ? "assets" : $input->getOption("assets");
+        $destLocation     = is_null($input->getOption("dest")) ? "assets" : $input->getOption("dest");
 
         $output->writeln('<info>Installing Heisenberg...</info>');
         $this->makeFilename()
              ->download()
              ->extract()
-             ->move($srcLocation, $assetsLocation)
+             ->move($srcLocation, $destLocation)
              ->cleanUp();
 
         $output->writeln('<info>Say. My. Name.</info>');
     }
 
     /**
-     * [makeFilename description]
-     * @return [type] [description]
+     * Creates the temp directories we're going to need for the
+     * rest of the process
+     *
+     * @return $this
      */
     protected function makeFilename()
     {
@@ -104,8 +103,10 @@ class InstallCommand extends Command
     }
 
     /**
-     * [download description]
-     * @return [type] [description]
+     * Here we download the current master branch zip file and place
+     * it into the $tempFolder
+     *
+     * @return $this
      */
     protected function download()
     {
@@ -116,8 +117,10 @@ class InstallCommand extends Command
     }
 
     /**
-     * [extract description]
-     * @return [type] [description]
+     * Takes the Zip we just downloaded and extracts it so we can
+     * work with the contents
+     *
+     * @return $this
      */
     protected function extract()
     {
@@ -131,47 +134,56 @@ class InstallCommand extends Command
     }
 
     /**
-     * [move description]
-     * @param  [type] $srcLocation    [description]
-     * @param  [type] $assetsLocation [description]
-     * @return [type]                 [description]
+     * We've pulled down all the necessary files, now it's time to
+     * move them into the correct places
+     * @param  String $srcLocation  where you want the files currently in the heisenberg/src folder to go defaults to src
+     * @param  String $destLocation where you want the files currently in heisenberg/assets folder to go defaults to assets
+     *
+     * @return $this
      */
-    protected function move($srcLocation, $assetsLocation)
+    protected function move($srcLocation, $destLocation)
     {
         $downloadedFilePath = $this->tempFolder . "/heisenberg-toolkit-master/";
 
-        $this->moveFiles($downloadedFilePath);
-        $this->moveFolders($downloadedFilePath, $srcLocation, $assetsLocation);
+        $this->moveFiles($downloadedFilePath, $srcLocation, $destLocation);
+        $this->moveFolders($downloadedFilePath, $srcLocation, $destLocation);
 
         return $this;
     }
 
     /**
-     * [moveFiles description]
-     * @param  [type] $downloadedFilePath [description]
-     * @return [type]                     [description]
+     * Does the actual moving of files
+     * @param  String $downloadedFilePath location of the extracted zip files
+     * @param  String $srcLocationPath    path to where you want the files currently in the extracted zip folder to live
+     *
+     * @return $this
      */
-    private function moveFiles($downloadedFilePath)
+    private function moveFiles($downloadedFilePath, $srcLocation, $destLocation)
     {
         foreach ($this->copyFiles['files'] as $file) {
             $oldFilePath = $downloadedFilePath.$file;
             $newFilePath = $file;
             $this->removeOldFiles($newFilePath);
 
-            $this->filesystem->copy($oldFilePath, $newFilePath);
+            // TODO: Is this the best way to do this? Probably not.
+            $content = $this->filesystem->read($oldFilePath);
+            $content = str_replace("src/", $srcLocation ."/", $content);
+            $content = str_replace("assets/", $destLocation ."/", $content);
+
+            $this->filesystem->put($newFilePath, $content);
         }
 
         return $this;
     }
 
     /**
-     * [moveFolders description]
-     * @param  [type] $downloadedFilePath [description]
-     * @param  [type] $srcLocation        [description]
-     * @param  [type] $assetsLocation     [description]
-     * @return [type]                     [description]
+     * Does the actual moving of files in folders
+     * @param  String $downloadedFilePath location of the extracted zip files
+     * @param  String $srcLocation   path to where you want the files currently in the extracted zip folder to live
+     *
+     * @return $this
      */
-    private function moveFolders($downloadedFilePath, $srcLocation, $assetsLocation)
+    private function moveFolders($downloadedFilePath, $srcLocation)
     {
         foreach ($this->copyFiles['folders'] as $folder) {
             $path = $downloadedFilePath.$folder;
@@ -184,11 +196,12 @@ class InstallCommand extends Command
     }
 
     /**
-     * [copyFolderContents description]
+     * Copies the files out of the folder and into the new location
      * @param  [type] $contents           [description]
      * @param  [type] $srcLocation        [description]
      * @param  [type] $downloadedFilePath [description]
-     * @return [type]                     [description]
+     *
+     * @return $this
      */
     private function copyFolderContents($contents, $srcLocation, $downloadedFilePath)
     {
@@ -196,15 +209,21 @@ class InstallCommand extends Command
             if ($file['type'] === "file") {
                 $newFile = $srcLocation."/".str_replace($downloadedFilePath, "", $file['path']);
                 $this->removeOldFiles($newFile);
+
                 $this->filesystem->copy($file['path'], $newFile);
             }
         }
+
+        return $this;
     }
 
     /**
-     * [removeOldFiles description]
-     * @param  [type] $existingFile [description]
-     * @return [type]               [description]
+     * Checks if a particular file exists in the new location and deletes
+     * that file.
+     *
+     * @param  String $existingFile file we're checking on in the new location
+     *
+     * @return $this
      */
     private function removeOldFiles($existingFile)
     {
@@ -216,8 +235,9 @@ class InstallCommand extends Command
     }
 
     /**
-     * [cleanUp description]
-     * @return [type] [description]
+     * Deletes the tempFolder and all of its contents.
+     *
+     * @return $this
      */
     protected function cleanUp()
     {

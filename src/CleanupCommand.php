@@ -11,8 +11,11 @@ class CleanupCommand extends Command
 {
 
     /**
-     * [configure description]
-     * @return [type] [description]
+     * Console command configuration, this is where the command arguments
+     * get set up and what the help menu pull from when it needs info for
+     * about the commands
+     *
+     * @return null
      */
     protected function configure()
     {
@@ -21,10 +24,13 @@ class CleanupCommand extends Command
     }
 
     /**
-     * [execute description]
-     * @param  InputInterface  $input  [description]
-     * @param  OutputInterface $output [description]
-     * @return [type]                  [description]
+     * This is the main entry point for the command. When you run it, this
+     * is what it fires
+     *
+     * @param  Symfony\Component\Console\Input\InputInterface  $input
+     * @param  Symfony\Component\Console\Input\OutputInterface $output
+     *
+     * @return null
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
@@ -38,9 +44,12 @@ class CleanupCommand extends Command
     }
 
     /**
-     * [cleanUp description]
-     * @param  [type] $currentFiles [description]
-     * @return [type]               [description]
+     * Seeks out any temp folders that may have not been deleted due to
+     * an error durning a prior install.
+     *
+     * @param League\Flysystem\Filesystem $currentFiles contents of the current directory
+     *
+     * @return $this
      */
     protected function cleanUp($currentFiles, $filesystem)
     {
