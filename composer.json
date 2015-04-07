@@ -1,6 +1,6 @@
 {
-    "name": "heisenberg/installer",
-    "description": "Heisenberg installer.",
+    "name": "heisenberg-toolkit/installer",
+    "description": "The Heisenberg-Toolkit Installer.",
     "keywords": ["heisenberg"],
     "license": "MIT",
     "authors": [
