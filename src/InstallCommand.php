@@ -36,14 +36,17 @@ class InstallCommand extends Command
     private $copyFiles = [
         'folders' => [
             "src/js",
-            "src/sass"
+            "src/sass",
+            "src/images",
+            "src/fonts"
         ],
         'files' => [
             ".bowerrc",
             ".editorconfig",
             "bower.json",
             "gulpfile.js",
-            "package.json"
+            "package.json",
+            ".gitignore"
         ]
     ];
 
@@ -167,8 +170,10 @@ class InstallCommand extends Command
 
             // TODO: Is this the best way to do this? Probably not.
             $content = $this->filesystem->read($oldFilePath);
-            $content = str_replace("src/", $srcLocation ."/", $content);
-            $content = str_replace("assets/", $destLocation ."/", $content);
+            $content = str_replace("src/", "{SRC}" ."/", $content);
+            $content = str_replace("assets/", "{DEST}" ."/", $content);
+            $content = str_replace("{SRC}", $srcLocation, $content);
+            $content = str_replace("{DEST}", $destLocation, $content);
 
             $this->filesystem->put($newFilePath, $content);
         }
