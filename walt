@@ -12,3 +12,5 @@ $app->add(new Heisenberg\Installer\Console\InstallCommand);
 $app->add(new Heisenberg\Installer\Console\CleanupCommand);
 
 $app->run();
+
+exec("npm install && bower install");
