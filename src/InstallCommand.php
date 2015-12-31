@@ -87,7 +87,7 @@ class InstallCommand extends Command
              ->extract()
              ->move($srcLocation, $destLocation)
              ->cleanUp()
-             ->installDeps($input->getOption('deps'));
+             ->installDeps($input->getOption('deps'), $output);
 
         $output->writeln('<info>Say. My. Name.</info>');
     }
@@ -253,15 +253,49 @@ class InstallCommand extends Command
         return $this;
     }
 
-    protected function installDeps($installDeps)
+    protected function installDeps($installDeps, $output)
     {
         if ($installDeps) {
-            echo "NPM \n";
-            exec("npm install");
-            echo "Bower \n";
-            exec("bower install");
+            $output->writeln("<info>Attempting to install dependencies, this will take a moment...</info>");
+            try {
+                $this->installNPM();
+                $this->installBower();
+                $this->installGulp();
+            } catch(ProcessFailedException $e) {
+                $output->writeln("<error>Error ProcessFailedException".$e->getMessage()."</error>");
+            }
+
         }
 
         return $this;
     }
+
+    private function installNPM()
+    {
+        $this->processCLI("npm install");
+    }
+
+    private function installBower()
+    {
+        $this->processCLI("bower install");
+    }
+
+    private function installGulp()
+    {
+        $this->processCLI("gulp compile");
+    }
+
+    private function processCLI($cmd)
+    {
+        $process = new Process($cmd);
+        $process->setTimeout(3600);
+        $process->run(function ($type, $buffer) {
+            echo $buffer;
+        });
+
+        if (! $process->isSuccessful()) {
+            throw new ProcessFailedException($process);
+        }
+    }
 }
+

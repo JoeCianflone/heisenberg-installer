@@ -28,4 +28,10 @@ walt install --dest="public/foo/bar"
 
 This will also go through and make some changes to the base `gulpfile.js` and make sure all your directories match up.  
 
+If you want to pull down all your `npm` and `bower` components and compile you assets on the initial install of Heisenberg you can do that by adding the `--deps` flag.
 
+```
+walt install --deps
+```
+
+and now you won't need to run `npm install && bower install`.
