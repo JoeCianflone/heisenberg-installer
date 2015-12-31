@@ -1,4 +1,5 @@
-<?php namespace Heisenberg\Installer\Console;
+<?php
+namespace Heisenberg\Installer\Console;
 
 use RuntimeException;
 use League\Flysystem\Filesystem;

@@ -1,4 +1,5 @@
-<?php namespace Heisenberg\Installer\Console;
+<?php
+namespace Heisenberg\Installer\Console;
 
 use ZipArchive;
 use RuntimeException;
@@ -62,7 +63,8 @@ class InstallCommand extends Command
         $this->setName('install')
              ->setDescription('Installs heisenberg to the current directory.')
              ->addOption("src", "source files", InputOption::VALUE_OPTIONAL, "where to place src files")
-             ->addOption("dest", "compiled src files", InputOption::VALUE_OPTIONAL, "where heisenberg compiles files to");
+             ->addOption("dest", "compiled src files", InputOption::VALUE_OPTIONAL, "where heisenberg compiles files to")
+             ->addOption("deps", null, InputOption::VALUE_NONE, "If set this will install bower and npm components");
     }
 
     /**
@@ -79,13 +81,13 @@ class InstallCommand extends Command
         $this->filesystem = new Filesystem(new Adapter(getcwd().'/'));
         $srcLocation      = is_null($input->getOption("src")) ? "src" : $input->getOption("src");
         $destLocation     = is_null($input->getOption("dest")) ? "assets" : $input->getOption("dest");
-
         $output->writeln('<info>Installing Heisenberg...</info>');
         $this->makeFilename()
              ->download()
              ->extract()
              ->move($srcLocation, $destLocation)
-             ->cleanUp();
+             ->cleanUp()
+             ->installDeps($input->getOption('deps'));
 
         $output->writeln('<info>Say. My. Name.</info>');
     }
@@ -247,6 +249,18 @@ class InstallCommand extends Command
     protected function cleanUp()
     {
         $this->filesystem->deleteDir($this->tempFolder);
+
+        return $this;
+    }
+
+    protected function installDeps($installDeps)
+    {
+        if ($installDeps) {
+            echo "NPM \n";
+            exec("npm install");
+            echo "Bower \n";
+            exec("bower install");
+        }
 
         return $this;
     }
