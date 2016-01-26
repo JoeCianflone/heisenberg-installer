@@ -1,4 +1,5 @@
 <?php
+
 namespace Heisenberg\Installer\Console;
 
 use ZipArchive;
@@ -15,49 +16,29 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class InstallCommand extends Command
 {
-
-    /**
-     * @var String
-     */
+    private $repoPath = 'https://github.com/JoeCianflone/heisenberg-toolkit/archive/master.zip';
     private $tempFolder;
-
-    /**
-     * @var League\Flysystem\Filesystem;
-     */
-    private $filesystem;
-
-    /**
-     * @var ZipArchive
-     */
     private $tempZipFile;
 
-    /**
-     * @var Array
-     */
-    private $copyFiles = [
-        'folders' => [
-            "src/js",
-            "src/sass",
-            "src/images",
-            "src/fonts"
-        ],
-        'files' => [
-            ".bowerrc",
-            ".editorconfig",
-            "bower.json",
-            "gulpfile.js",
-            "package.json",
-            ".gitignore"
-        ]
+    private $folders = [
+        'src',
+        'gulp',
     ];
 
-    /**
-     * Console command configuration, this is where the command arguments
-     * get set up and what the help menu pull from when it needs info for
-     * about the commands
-     *
-     * @return null
-     */
+    private $files = [
+        '.bowerrc',
+        '.editorconfig',
+        'bower.json',
+        'gulpfile.js',
+        'package.json',
+        '.gitignore',
+        'gulp/config.js',
+        'heisenberg.html',
+    ];
+
+    private $srcPath;
+    private $compiledPath;
+
     protected function configure()
     {
         $this->setName('install')
@@ -67,66 +48,36 @@ class InstallCommand extends Command
              ->addOption("deps", null, InputOption::VALUE_NONE, "If set this will install bower and npm components");
     }
 
-    /**
-     * This is the main entry point for the command. When you run it, this
-     * is what it fires
-     *
-     * @param  Symfony\Component\Console\Input\InputInterface  $input
-     * @param  Symfony\Component\Console\Input\OutputInterface $output
-     *
-     * @return null
-     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->filesystem = new Filesystem(new Adapter(getcwd().'/'));
-        $srcLocation      = is_null($input->getOption("src")) ? "src" : $input->getOption("src");
-        $destLocation     = is_null($input->getOption("dest")) ? "assets" : $input->getOption("dest");
-        $output->writeln('<info>Installing Heisenberg...</info>');
-        $this->makeFilename()
-             ->download()
-             ->extract()
-             ->move($srcLocation, $destLocation)
-             ->cleanUp()
-             ->installDeps($input->getOption('deps'), $output);
+        $this->filesystem    = new Filesystem(new Adapter(getcwd().'/'));
+        $this->srcPath       = $input->getOption("src")  ?: "src";
+        $this->compiledPath  = $input->getOption("dest") ?: "assets";
+        $this->tempFolder    = 'mrwhite_'.md5(time().uniqid());
+        $this->tempZipFile   = $this->tempFolder . '/heisenberg_'.md5(time().uniqid()) . ".zip";
 
+
+        $output->writeln('<info>Installing Heisenberg...</info>');
+        $this->download()
+             ->extract()
+             ->move()
+             ->cleanup()
+             ->dependencies($input->getOption('deps'), $output);
+
+        $output->writeln('<info>Heisenberg Installed. Now...</info>');
         $output->writeln('<info>Say. My. Name.</info>');
     }
 
-    /**
-     * Creates the temp directories we're going to need for the
-     * rest of the process
-     *
-     * @return $this
-     */
-    protected function makeFilename()
-    {
-        $this->tempFolder = 'mrwhite_'.md5(time().uniqid());
-        $this->filesystem->createDir($this->tempFolder);
-        $this->tempZipFile = $this->tempFolder . '/heisenberg_'.md5(time().uniqid()) . ".zip";
-
-        return $this;
-    }
-
-    /**
-     * Here we download the current master branch zip file and place
-     * it into the $tempFolder
-     *
-     * @return $this
-     */
     protected function download()
     {
-        $response = (new Client)->get('https://github.com/JoeCianflone/heisenberg-toolkit/archive/master.zip');
+        $response = (new Client)->get($this->repoPath);
+
+        $this->filesystem->createDir($this->tempFolder);
         $this->filesystem->write($this->tempZipFile, $response->getBody());
 
         return $this;
     }
 
-    /**
-     * Takes the Zip we just downloaded and extracts it so we can
-     * work with the contents
-     *
-     * @return $this
-     */
     protected function extract()
     {
         $archive = new ZipArchive;
@@ -138,151 +89,69 @@ class InstallCommand extends Command
         return $this;
     }
 
-    /**
-     * We've pulled down all the necessary files, now it's time to
-     * move them into the correct places
-     * @param  String $srcLocation  where you want the files currently in the heisenberg/src folder to go defaults to src
-     * @param  String $destLocation where you want the files currently in heisenberg/assets folder to go defaults to assets
-     *
-     * @return $this
-     */
-    protected function move($srcLocation, $destLocation)
+    protected function move()
     {
-        $downloadedFilePath = $this->tempFolder . "/heisenberg-toolkit-master/";
-
-        $this->moveFiles($downloadedFilePath, $srcLocation, $destLocation);
-        $this->moveFolders($downloadedFilePath, $srcLocation, $destLocation);
+        $dlPath = $this->tempFolder . "/heisenberg-toolkit-master/";
+        $this->moveFolders($dlPath);
+        $this->moveFiles($dlPath);
 
         return $this;
     }
 
-    /**
-     * Does the actual moving of files
-     * @param  String $downloadedFilePath location of the extracted zip files
-     * @param  String $srcLocationPath    path to where you want the files currently in the extracted zip folder to live
-     *
-     * @return $this
-     */
-    private function moveFiles($downloadedFilePath, $srcLocation, $destLocation)
+    private function moveFolders($dlPath)
     {
-        foreach ($this->copyFiles['files'] as $file) {
-            $oldFilePath = $downloadedFilePath.$file;
-            $newFilePath = $file;
-            $this->removeOldFiles($newFilePath);
-
-            // TODO: Is this the best way to do this? Probably not.
-            $content = $this->filesystem->read($oldFilePath);
-            $content = str_replace("src/", "{SRC}" ."/", $content);
-            $content = str_replace("assets/", "{DEST}" ."/", $content);
-            $content = str_replace("{SRC}", $srcLocation, $content);
-            $content = str_replace("{DEST}", $destLocation, $content);
-
-            $this->filesystem->put($newFilePath, $content);
+        foreach ($this->folders as $folder) {
+            $list = $this->filesystem->listContents($dlPath.$folder, true);
+            $this->copyFiles($list, $dlPath);
         }
-
-        return $this;
     }
 
-    /**
-     * Does the actual moving of files in folders
-     * @param  String $downloadedFilePath location of the extracted zip files
-     * @param  String $srcLocation   path to where you want the files currently in the extracted zip folder to live
-     *
-     * @return $this
-     */
-    private function moveFolders($downloadedFilePath, $srcLocation)
+    private function moveFiles($dlPath)
     {
-        foreach ($this->copyFiles['folders'] as $folder) {
-            $path = $downloadedFilePath.$folder;
-            $contents = $this->filesystem->listContents($path, true);
+        foreach ($this->files as $file) {
+            $fileContent = $this->filesystem->read($dlPath.$file);
+            $fileContent = $this->updatePaths($fileContent);
 
-            $this->copyFolderContents($contents, $srcLocation, $downloadedFilePath."src/");
+            $this->filesystem->put($file, $fileContent);
         }
-
-        return $this;
     }
 
-    /**
-     * Copies the files out of the folder and into the new location
-     * @param  [type] $contents           [description]
-     * @param  [type] $srcLocation        [description]
-     * @param  [type] $downloadedFilePath [description]
-     *
-     * @return $this
-     */
-    private function copyFolderContents($contents, $srcLocation, $downloadedFilePath)
+    private function updatePaths($content)
     {
-        foreach ($contents as $file) {
-            if ($file['type'] === "file") {
-                $newFile = $srcLocation."/".str_replace($downloadedFilePath, "", $file['path']);
-                $this->removeOldFiles($newFile);
+        $content = str_replace('src/', $this->srcPath.'/', $content);
+        $content = str_replace('assets/', $this->compiledPath.'/', $content);
 
-                $this->filesystem->copy($file['path'], $newFile);
+        return $content;
+    }
+    private function copyFiles($list, $dlPath) {
+        foreach ($list as $file) {
+            if ($file['type'] === 'file') {
+                $newPath = str_replace($dlPath, "", $file['path']);
+                $newPath = str_replace("src", $this->srcPath, $newPath);
+                $this->filesystem->copy($file['path'], $newPath);
             }
         }
-
-        return $this;
     }
 
-    /**
-     * Checks if a particular file exists in the new location and deletes
-     * that file.
-     *
-     * @param  String $existingFile file we're checking on in the new location
-     *
-     * @return $this
-     */
-    private function removeOldFiles($existingFile)
-    {
-        if ($this->filesystem->has($existingFile)) {
-            $this->filesystem->delete($existingFile);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Deletes the tempFolder and all of its contents.
-     *
-     * @return $this
-     */
-    protected function cleanUp()
+    protected function cleanup()
     {
         $this->filesystem->deleteDir($this->tempFolder);
-
         return $this;
     }
 
-    protected function installDeps($installDeps, $output)
+    protected function dependencies($installDeps, $output)
     {
         if ($installDeps) {
             $output->writeln("<info>Attempting to install dependencies, this will take a moment...</info>");
             try {
-                $this->installNPM();
-                $this->installBower();
-                $this->installGulp();
+                $this->processCLI("npm install");
+                $this->processCLI("bower install");
+                $this->processCLI("gulp compile");
             } catch(ProcessFailedException $e) {
                 $output->writeln("<error>Error ProcessFailedException".$e->getMessage()."</error>");
             }
-
         }
-
         return $this;
-    }
-
-    private function installNPM()
-    {
-        $this->processCLI("npm install");
-    }
-
-    private function installBower()
-    {
-        $this->processCLI("bower install");
-    }
-
-    private function installGulp()
-    {
-        $this->processCLI("gulp compile");
     }
 
     private function processCLI($cmd)
