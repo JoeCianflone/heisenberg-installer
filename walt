@@ -7,7 +7,7 @@ if (file_exists(__DIR__.'/../../autoload.php')) {
     require __DIR__.'/vendor/autoload.php';
 }
 
-$app = new Symfony\Component\Console\Application('Heisenberg Installer', '0.4.1');
+$app = new Symfony\Component\Console\Application('Heisenberg Installer', '0.4.2');
 $app->add(new Heisenberg\Installer\Console\InstallCommand);
 $app->add(new Heisenberg\Installer\Console\CleanupCommand);
 
