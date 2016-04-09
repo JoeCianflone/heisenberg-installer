@@ -11,14 +11,17 @@
     ],
     "autoload": {
         "psr-4": {
-            "Heisenberg\\Installer\\Console\\": "src/"
+            "HeisenbergInstaller\\": "src/"
         }
     },
     "require": {
-        "guzzlehttp/guzzle": "^5.3",
-        "symfony/console": "^2.8",
+        "illuminate/console": "^5.2",
+        "illuminate/support": "^5.2",
         "league/flysystem": "^1.0",
-        "symfony/process": "^2.8"
+        "illuminate/contracts": "^5.2",
+        "symfony/process": "^2.8",
+        "symfony/console": "^2.8",
+        "guzzlehttp/guzzle": "^5.3"
     },
     "bin": [
         "walt"
