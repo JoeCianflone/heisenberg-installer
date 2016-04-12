@@ -3,9 +3,9 @@
 namespace HeisenbergInstaller\Support;
 
 use Illuminate\Support\Str;
-use HeisenbergInstaller\InvalidArgumentException;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
+use HeisenbergInstaller\Exceptions\InvalidArgument;
 
 class Parser
 {
@@ -15,12 +15,12 @@ class Parser
      * @param  string  $expression
      * @return array
      *
-     * @throws \InvalidArgumentException
+     * @throws \InvalidArgument
      */
     public static function parse($expression)
     {
         if (trim($expression) === '') {
-            //throw new InvalidArgumentException('Console command definition is empty.');
+            throw new InvalidArgument('Console command definition is empty.');
         }
 
         preg_match('/[^\s]+/', $expression, $matches);
@@ -28,7 +28,7 @@ class Parser
         if (isset($matches[0])) {
             $name = $matches[0];
         } else {
-            //throw new InvalidArgumentException('Unable to determine command name from signature.');
+            throw new InvalidArgument('Unable to determine command name from signature.');
         }
 
         preg_match_all('/\{\s*(.*?)\s*\}/', $expression, $matches);

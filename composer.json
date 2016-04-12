@@ -21,7 +21,8 @@
         "illuminate/contracts": "^5.2",
         "symfony/process": "^2.8",
         "symfony/console": "^2.8",
-        "guzzlehttp/guzzle": "^5.3"
+        "guzzlehttp/guzzle": "^5.3",
+        "sebastian/diff": "^1.4"
     },
     "bin": [
         "walt"

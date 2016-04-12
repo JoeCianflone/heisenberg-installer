@@ -14,10 +14,12 @@ use HeisenbergInstaller\Commands\Cleanup;
 use Symfony\Component\Console\Application;
 use League\Flysystem\Adapter\Local as Adapter;
 
+$filesystem = new Filesystem(new Adapter(getcwd().'/'));
+
 $app = new Application("The Heisenberg Installer", "0.5.0");
 
-$app->add(new Install(new Filesystem(new Adapter(getcwd().'/'))));
-$app->add(new Cleanup);
-$app->add(new Update);
+$app->add(new Install($filesystem));
+$app->add(new Cleanup($filesystem));
+//$app->add(new Update($filesystem));
 
 $app->run();

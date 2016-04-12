@@ -1,28 +1,29 @@
 <?php
+
 namespace HeisenbergInstaller\Commands;
 
-
-use Symfony\Component\Process\Process;
-use League\Flysystem\Adapter\Local as Adapter;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-
+use League\Flysystem\Filesystem;
+use HeisenbergInstaller\Support\Cleaner;
 
 class Cleanup extends Command {
 
    protected $signature = 'cleanup';
 
-   protected $description = 'Remove any installer cruft';
+   protected $description = 'Clears out any leftover files';
 
-   public function __construct()
+   private $filesystem;
+
+   public function __construct(Filesystem $filesystem)
    {
+      $this->filesystem = $filesystem;
+
       parent::__construct();
    }
 
    public function handle()
    {
-
+      $this->info("Cleaning up...");
+      Cleaner::clean($this->filesystem);
+      $this->info("All Clean");
    }
 }
