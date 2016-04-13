@@ -65,7 +65,7 @@ class Mover {
 
    private function updateExistingFile($path, $oldContent, $newContent, $force)
    {
-      if ($force) {
+      if ($force || $path == ".heisenberg") {
          $this->filesystem->update($path, $newContent);
       } else {
          $this->diffFiles($path, $oldContent, $newContent);

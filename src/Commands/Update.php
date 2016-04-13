@@ -1,13 +1,13 @@
 <?php
 namespace HeisenbergInstaller\Commands;
 
-
-use Symfony\Component\Process\Process;
-use League\Flysystem\Adapter\Local as Adapter;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
+use GuzzleHttp\Client;
+use League\Flysystem\Filesystem;
+use HeisenbergInstaller\Support\Mover;
+use HeisenbergInstaller\Support\Cleaner;
+use HeisenbergInstaller\Support\Extractor;
+use HeisenbergInstaller\Support\Downloader;
+use HeisenbergInstaller\Support\Dependencies;
 
 
 class Update extends Command {
@@ -19,12 +19,66 @@ class Update extends Command {
 
    protected $description = 'Update to the latest version of Heisenberg';
 
-   public function __construct()
+   private $filesystem;
+   private $download;
+   private $move;
+
+   public function __construct(Filesystem $filesystem)
    {
+      $this->filesystem = $filesystem;
+      $this->download = new Downloader();
+
       parent::__construct();
    }
 
    public function handle()
    {
+      $client = new Client();
+      $heisenbergInfo = json_decode($this->filesystem->read(".heisenberg"), true);
+      $response = $client->get("https://api.github.com/repos/joecianflone/heisenberg-toolkit/releases/latest");
+      $release = $response->json();
+
+      if (version_compare($release['tag_name'], $heisenbergInfo['version'],'>')) {
+         $this->info("Downloading & Extracting Files...");
+         $package = $this->download->getPackage($this->option('dev'), $this->filesystem);
+         Extractor::get($package, $this->download->getTempFolder());
+
+         $this->info("Moving files into place...");
+         $move = new Mover($this->filesystem, $this->download->getTempFolder(), $heisenbergInfo['path']['src'], $heisenbergInfo['path']['dest']);
+         $move->files($this->option('dev'), $this->option('force'));
+
+         $this->info("Cleanup...");
+         Cleaner::clean($this->filesystem);
+
+         if ($this->option("deps")) {
+            $this->info("Update Dependencies, this may take a bit (or just not work) because NPM is terrible");
+            Dependencies::load();
+         }
+
+         $this->info("All done, now");
+         $this->info("Say. My. Name.");
+      } else {
+         $this->info("You're already running the latest");
+      }
+
+
+
+
+
+
+      // $this->info("Moving files into place...");
+      // $move = new Mover($this->filesystem, $this->download->getTempFolder(), $this->argument("src"), $this->argument("dest"));
+      // $move->files($this->option('dev'), $this->option('force'));
+
+      // $this->info("Cleanup...");
+      // Cleaner::clean($this->filesystem);
+
+      // if ($this->option("deps")) {
+      //    $this->info("Update Dependencies, this may take a bit (or just not work) because NPM is terrible");
+      //    Dependencies::load();
+      // }
+
+      // $this->info("All done, now");
+      // $this->info("Say. My. Name.");
    }
 }
