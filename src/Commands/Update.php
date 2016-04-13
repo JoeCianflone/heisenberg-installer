@@ -31,6 +31,10 @@ class Update extends Command {
       parent::__construct();
    }
 
+   // TODO: this is pretty much identical to the install
+   // the only difference here is we check the version
+   // strings and we set the src and dest path differently
+   // this function needs to be refactored out of here
    public function handle()
    {
       $client = new Client();
@@ -39,6 +43,7 @@ class Update extends Command {
       $release = $response->json();
 
       if (version_compare($release['tag_name'], $heisenbergInfo['version'],'>')) {
+
          $this->info("Downloading & Extracting Files...");
          $package = $this->download->getPackage($this->option('dev'), $this->filesystem);
          Extractor::get($package, $this->download->getTempFolder());
@@ -60,25 +65,5 @@ class Update extends Command {
       } else {
          $this->info("You're already running the latest");
       }
-
-
-
-
-
-
-      // $this->info("Moving files into place...");
-      // $move = new Mover($this->filesystem, $this->download->getTempFolder(), $this->argument("src"), $this->argument("dest"));
-      // $move->files($this->option('dev'), $this->option('force'));
-
-      // $this->info("Cleanup...");
-      // Cleaner::clean($this->filesystem);
-
-      // if ($this->option("deps")) {
-      //    $this->info("Update Dependencies, this may take a bit (or just not work) because NPM is terrible");
-      //    Dependencies::load();
-      // }
-
-      // $this->info("All done, now");
-      // $this->info("Say. My. Name.");
    }
 }
