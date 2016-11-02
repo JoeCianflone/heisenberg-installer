@@ -16,7 +16,7 @@ use League\Flysystem\Adapter\Local as Adapter;
 
 $filesystem = new Filesystem(new Adapter(getcwd().'/'));
 
-$app = new Application("The Heisenberg Installer", "0.5.0");
+$app = new Application("The Heisenberg Installer", "0.6.0");
 
 $app->add(new Install($filesystem));
 $app->add(new Cleanup($filesystem));

@@ -10,8 +10,7 @@ class Dependencies {
    public static function load()
    {
       try {
-         self::processCLI("npm install");
-         self::processCLI("bower install");
+         self::processCLI("yarn install");
          self::processCLI("gulp");
       } catch(ProcessFailed $e) {
          echo $e->getMessage();

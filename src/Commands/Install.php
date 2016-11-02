@@ -45,7 +45,7 @@ class Install extends Command {
       Cleaner::clean($this->filesystem);
 
       if ($this->option("deps")) {
-         $this->info("Update Dependencies, this may take a bit (or just not work) because NPM is terrible");
+         $this->info("Update Dependencies, this may take a bit");
          Dependencies::load();
       }
 

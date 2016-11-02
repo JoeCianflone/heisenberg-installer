@@ -39,8 +39,7 @@ Use this branch with caution.
 
 When you install a fresh copy of Heisenberg you've really just pulled down the latest code, but you haven't yet compiled it all. If you tried to run `gulp` right now, it probably won't work because you don't have any of your NPM dependencies on your machine. The `--deps` option will run the following commands for you:
 
-+ `npm install`
-+ `bower install`
++ `yarn install`
 + `gulp`
 
 That way your system is compiled and ready to go for you. This will add some time to the install process though because NPM and bower can take some time.
